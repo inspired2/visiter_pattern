@@ -1,25 +1,25 @@
 use smart_house::{SmartDevice, SmartDeviceList};
 
-trait BatchSwitch {
-    fn turn_off<S: Switcher>(&self, switcher: S);
+trait BatchVisit {
+    fn visit_all<V: Visitor>(&self, switcher: V);
 }
 
-trait Switcher {
-    fn switch_off(&self, device: &mut SmartDevice);
+trait Visitor {
+    fn execute(&self, target: &mut SmartDevice);
 }
-impl BatchSwitch for SmartDeviceList {
-    fn turn_off<T: Switcher>(&self, switcher: T) {
+impl BatchVisit for SmartDeviceList {
+    fn visit_all<V: Visitor>(&self, switcher: V) {
         let device_list = self.clone();
         device_list
             .get_inner_list()
             .iter_mut()
-            .for_each(|mut i| i.iter_mut().for_each(|d| switcher.switch_off(d)));
+            .for_each(|mut i| i.iter_mut().for_each(|d| switcher.execute(d)));
     }
 }
 struct SocketSwitcher;
 
-impl Switcher for SocketSwitcher {
-    fn switch_off(&self, device: &mut SmartDevice) {
+impl Visitor for SocketSwitcher {
+    fn execute(&self, device: &mut SmartDevice) {
         if let SmartDevice::Socket(s) = device {
             s.turn_off()
         }
@@ -27,7 +27,7 @@ impl Switcher for SocketSwitcher {
 }
 #[cfg(test)]
 mod test {
-    use crate::{BatchSwitch, SocketSwitcher};
+    use crate::{BatchVisit, SocketSwitcher};
     use smart_house::{
         DeviceInfo, DeviceInfoProvider, PowerSocket, PowerSocketState, SmartDevice, SmartDeviceList,
     };
@@ -53,7 +53,7 @@ mod test {
             }
         );
 
-        devices.turn_off(SocketSwitcher);
+        devices.visit_all(SocketSwitcher);
         //smart sockets are switched off:
         assert_eq!(
             devices.get_device_info("hall", "sock2").unwrap(),

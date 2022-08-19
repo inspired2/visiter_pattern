@@ -8,7 +8,7 @@ trait Switcher {
     fn switch_off(&self, device: &mut SmartDevice);
 }
 impl BatchSwitch for SmartDeviceList {
-    fn turn_off<T: Switcher>(&self, switcher: T) -> () {
+    fn turn_off<T: Switcher>(&self, switcher: T) {
         let device_list = self.clone();
         device_list
             .get_inner_list()
@@ -20,9 +20,8 @@ struct SocketSwitcher;
 
 impl Switcher for SocketSwitcher {
     fn switch_off(&self, device: &mut SmartDevice) {
-        match device {
-            SmartDevice::Socket(s) => s.turn_off(),
-            _ => {}
+        if let SmartDevice::Socket(s) = device {
+            s.turn_off()
         }
     }
 }
